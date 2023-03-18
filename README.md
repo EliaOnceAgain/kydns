@@ -7,7 +7,7 @@
 # KYDNS
 
 KYDNS (Know Your DNS) is a simple DNS client library written in Python 3. 
-It allows sending DNS queries for A and AAAA records, easily modify any of the DNS packet fields, and provides an ASCII representation of the DNS packets.  
+It allows sending DNS queries for A, AAAA, and NS records, easily modify any of the DNS packet fields, and provides an ASCII representation of the DNS packets.  
 The library is designed to be easy to use and can be used for learning, testing, or other purposes.
 
 ## Installation
@@ -16,7 +16,7 @@ KYDNS uses Python 3 standard libs and has no 3rd party dependencies. Install usi
 ```shell
 pip install kydns
 ```
-Or git clone the repository:
+Or git clone:
 ```shell
 git clone https://github.com/eliaonceagain/kydns.git
 cd kydns/
@@ -73,8 +73,6 @@ rsp = req.send(("1.1.1.1", 53))
 /                               /
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--
 ```
-
-Fixed length fields are represented with `|` and variable length fields with `/`. If the name field is an offset, `|` is used.
 
 ## Packet Modification
 

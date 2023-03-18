@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 
 import secrets
 import socket
@@ -25,7 +25,7 @@ class Request:
     def __bytes__(self):
         return bytes(self.header) + bytes(self.question)
 
-    def send(self, addr: tuple = ("100.93.66.103", 53), timeout: int = 1) -> 'Response':
+    def send(self, addr, timeout: int = 1) -> 'Response':
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(timeout)
         try:
@@ -43,7 +43,11 @@ class Request:
         obj.header = DNSHeader.from_buffer_copy(rsp[:DNS_HEADER_LEN])
         self.raise_on_err(obj.header)
         obj.question = DNSQuestion.from_rsp(rsp)
-        obj.record = DNSRecord.from_rsp(obj.question.qtype, rsp, DNS_HEADER_LEN + len(obj.question))
+        index = DNS_HEADER_LEN + len(obj.question)
+        for _ in range(obj.header.ancount):
+            record = DNSRecord.from_rsp(obj.question.qtype, rsp, index)
+            index += len(record)
+            obj.add_record(record)
         return obj
 
     def raise_on_err(self, rsp_header) -> None:
@@ -60,6 +64,8 @@ class Request:
                 raise DNSNotImplemented("The name server does not support the requested query type")
             if rsp_header.rcode == 5:
                 raise DNSRefused("The name server refuses to perform the specified operation")
+        if rsp_header.qdcount > 1:
+            raise DNSError(f"Responses with more than 1 question are unsupported")
 
 
 class Response:
@@ -67,10 +73,13 @@ class Response:
         self.server = rsp_server or "NA"
         self.header = None
         self.question = None
-        self.record = None
+        self.records = []
 
     def __repr__(self):
-        return str(self.header) + str(self.question) + str(self.record)
+        return str(self.header) + str(self.question) + "".join(str(r) for r in self.records)
 
     def __bytes__(self):
-        return bytes(self.header) + bytes(self.question) + bytes(self.record)
+        return bytes(self.header) + bytes(self.question) + b"".join(bytes(r) for r in self.records)
+
+    def add_record(self, record):
+        self.records.append(record)

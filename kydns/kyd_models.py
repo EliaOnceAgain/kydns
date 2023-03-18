@@ -12,6 +12,7 @@ class QCLASS:
 
 class QTYPE:
     A = 1
+    NS = 2
     AAAA = 28
 
 
@@ -44,16 +45,20 @@ class DNSDomain:
 
     @classmethod
     def to_domain(cls, data: bytes, index: int = 0) -> 'DNSDomain':
-        domain = ""
+        data_len = len(data)
         offset = False
-        if (data[index] >> 6) == 3:
-            offset = True
-            index = int.from_bytes(data[index:index + 2], 'big') & 0x3f
-        label_len = data[index]
-        while label_len:
+        domain = ""
+
+        while index < data_len:
+            label_len = data[index]
+            if not label_len:
+                break
+            elif (data[index] >> 6) == 3:
+                offset = True
+                index = int.from_bytes(data[index:index + 2], 'big') & 0x3f
+                continue
             domain += data[index + 1:index + 1 + label_len].decode('utf-8') + "."
             index += (label_len + 1)
-            label_len = data[index]
         return cls(domain, offset)
 
 
