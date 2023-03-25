@@ -2,4 +2,4 @@ import kydns
 
 
 def test_version():
-    assert kydns.__version__ == '0.1.3'
+    assert kydns.__version__ == '0.1.4'

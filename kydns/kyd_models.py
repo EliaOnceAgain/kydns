@@ -1,4 +1,5 @@
 import ctypes
+from typing import Tuple
 
 from kydns.kyd_exc import DNSInvalidDomain
 from kydns.protocol import PPrinter
@@ -45,7 +46,7 @@ class DNSDomain:
                 raise DNSInvalidDomain(f"Label too long: '{label}'")
 
     @classmethod
-    def to_domain(cls, data: bytes, index: int = 0) -> tuple['DNSDomain', int]:
+    def to_domain(cls, data: bytes, index: int = 0) -> Tuple['DNSDomain', int]:
         start_index = index
         bytes_read = 0
         offset = False
@@ -128,7 +129,7 @@ class DNSQuestion:
         return str(pp)
 
     @classmethod
-    def from_rsp(cls, rsp, index=12) -> tuple['DNSQuestion', int]:
+    def from_rsp(cls, rsp, index=12) -> Tuple['DNSQuestion', int]:
         def to_int(data):
             return int.from_bytes(data, byteorder="big")
 

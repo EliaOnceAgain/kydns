@@ -1,4 +1,5 @@
 import socket
+from typing import Tuple
 
 from kydns.protocol import PPrinter
 from kydns.kyd_models import DNSDomain, QTYPE, QCLASS
@@ -45,7 +46,7 @@ class DNSRecord:
         return str(pp)
 
     @classmethod
-    def from_rsp(cls, rtype: int, rsp: bytes, index: int) -> tuple['DNSRecord', int]:
+    def from_rsp(cls, rtype: int, rsp: bytes, index: int) -> Tuple['DNSRecord', int]:
         record_cls = RTYPE_MAPPER.get(rtype)
         if not record_cls:
             raise NotImplementedError(f"Unable to parse response of unsupported type '{rtype}'")
