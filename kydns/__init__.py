@@ -1,4 +1,4 @@
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 import secrets
 import socket
@@ -42,12 +42,12 @@ class Request:
         obj = Response(rsp_server)
         obj.header = DNSHeader.from_buffer_copy(rsp[:DNS_HEADER_LEN])
         self.raise_on_err(obj.header)
-        obj.question = DNSQuestion.from_rsp(rsp)
-        index = DNS_HEADER_LEN + len(obj.question)
+        obj.question, bytes_read = DNSQuestion.from_rsp(rsp)
+        index = DNS_HEADER_LEN + bytes_read
         for _ in range(obj.header.ancount):
-            record = DNSRecord.from_rsp(obj.question.qtype, rsp, index)
-            index += len(record)
+            record, bytes_read = DNSRecord.from_rsp(obj.question.qtype, rsp, index)
             obj.add_record(record)
+            index += bytes_read
         return obj
 
     def raise_on_err(self, rsp_header) -> None:

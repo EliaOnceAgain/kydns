@@ -17,9 +17,9 @@ class QTYPE:
 
 
 class DNSDomain:
-    def __init__(self, domain, offset: bool = False):
-        self.domain = domain.lower().rstrip('.') if isinstance(domain, str) else domain
-        self.offset = offset
+    def __init__(self, domain, raw_bytes=None):
+        self.domain = domain.lower().rstrip('.')
+        self.raw_bytes = raw_bytes
         self.validate()
 
     def __len__(self):
@@ -29,12 +29,13 @@ class DNSDomain:
         return self.domain
 
     def __bytes__(self) -> bytes:
-        if self.offset:
-            return bytes.fromhex("c00c")
+        if self.raw_bytes:
+            return self.raw_bytes
+
         encoded = []
         for label in self.domain.split('.'):
             enc_label = label.encode('utf-8')
-            enc_len = len(enc_label).to_bytes(1, byteorder="big")
+            enc_len = len(enc_label).to_bytes(1, byteorder='big')
             encoded.append(enc_len + enc_label)
         return b''.join(encoded) + b'\x00'
 
@@ -44,22 +45,29 @@ class DNSDomain:
                 raise DNSInvalidDomain(f"Label too long: '{label}'")
 
     @classmethod
-    def to_domain(cls, data: bytes, index: int = 0) -> 'DNSDomain':
-        data_len = len(data)
+    def to_domain(cls, data: bytes, index: int = 0) -> tuple['DNSDomain', int]:
+        start_index = index
+        bytes_read = 0
         offset = False
         domain = ""
 
-        while index < data_len:
-            label_len = data[index]
-            if not label_len:
-                break
-            elif (data[index] >> 6) == 3:
-                offset = True
+        data_len = len(data)
+        while index < data_len and data[index]:
+            if (data[index] >> 6) == 3:  # is offset
                 index = int.from_bytes(data[index:index + 2], 'big') & 0x3f
-                continue
-            domain += data[index + 1:index + 1 + label_len].decode('utf-8') + "."
-            index += (label_len + 1)
-        return cls(domain, offset)
+                bytes_read += 2
+                offset = True
+
+            label_len = data[index]
+            label = data[index + 1:index + 1 + label_len].decode('utf-8')
+            domain += label + "."
+            index += label_len + 1
+
+            if not offset:
+                bytes_read += label_len + 1
+
+        bytes_read += 1 - offset  # non offset ends with 0x00
+        return cls(domain, data[start_index:start_index + bytes_read]), bytes_read
 
 
 class DNSHeader(ctypes.BigEndianStructure):
@@ -120,12 +128,12 @@ class DNSQuestion:
         return str(pp)
 
     @classmethod
-    def from_rsp(cls, rsp, index=12) -> 'DNSQuestion':
+    def from_rsp(cls, rsp, index=12) -> tuple['DNSQuestion', int]:
         def to_int(data):
             return int.from_bytes(data, byteorder="big")
 
-        domain = DNSDomain.to_domain(rsp, index)
-        index += len(domain)
+        domain, bytes_read = DNSDomain.to_domain(rsp, index)
+        index += bytes_read
         return cls(domain=domain,
                    qtype=to_int(rsp[index:index + 2]),
-                   qclass=to_int(rsp[index + 2:index + 4]))
+                   qclass=to_int(rsp[index + 2:index + 4])), bytes_read + 4

@@ -45,13 +45,13 @@ class DNSRecord:
         return str(pp)
 
     @classmethod
-    def from_rsp(cls, rtype: int, rsp: bytes, index: int):
+    def from_rsp(cls, rtype: int, rsp: bytes, index: int) -> tuple['DNSRecord', int]:
         record_cls = RTYPE_MAPPER.get(rtype)
         if not record_cls:
-            raise NotImplementedError(f"Unable to parse response for unsupported type '{rtype}'")
+            raise NotImplementedError(f"Unable to parse response of unsupported type '{rtype}'")
 
-        domain = DNSDomain.to_domain(rsp, index)
-        index += len(domain)
+        domain, bytes_read = DNSDomain.to_domain(rsp, index)
+        index += bytes_read
 
         rtype = to_int(rsp[index:index + 2])
         rclass = to_int(rsp[index + 2:index + 4])
@@ -60,25 +60,26 @@ class DNSRecord:
         rdata = rsp[index + 10:index + 10 + rdlength]
         ans = record_cls.to_ans(rsp, index + 10, rdlength)
 
-        return RTYPE_MAPPER.get(rtype)(domain, rtype, rclass, ttl, rdlength, rdata, ans)
+        return RTYPE_MAPPER.get(rtype)(domain, rtype, rclass, ttl, rdlength, rdata, ans), bytes_read + 10 + rdlength
 
 
 class ARecord(DNSRecord):
     @staticmethod
-    def to_ans(rsp, rdata_index, rdlength):
+    def to_ans(rsp: bytes, rdata_index: int, rdlength: int) -> str:
         return socket.inet_ntop(socket.AF_INET, rsp[rdata_index:rdata_index + rdlength])
 
 
 class AAAARecord(DNSRecord):
     @staticmethod
-    def to_ans(rsp, rdata_index, rdlength):
+    def to_ans(rsp: bytes, rdata_index: int, rdlength: int) -> str:
         return socket.inet_ntop(socket.AF_INET6, rsp[rdata_index:rdata_index + rdlength])
 
 
 class NSRecord(DNSRecord):
     @staticmethod
-    def to_ans(rsp, rdata_index, rdlength):
-        return DNSDomain.to_domain(rsp, rdata_index)
+    def to_ans(rsp: bytes, rdata_index: int, rdlength: int) -> DNSDomain:
+        domain, _ = DNSDomain.to_domain(rsp, rdata_index)
+        return domain
 
 
 def to_int(data: bytes) -> int:

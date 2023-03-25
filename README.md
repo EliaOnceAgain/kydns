@@ -56,7 +56,7 @@ rsp = req.send(("1.1.1.1", 53))
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             0x0001            |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--
-|           google.com          |
+/           google.com          /
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             0x0001            |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -74,7 +74,7 @@ rsp = req.send(("1.1.1.1", 53))
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--
 ```
 
-## Packet Modification
+### Set Query Fields
 
 KYDNS also allows you to easily modify any of the DNS packet fields before sending the query. 
 Here is an example of how to set the DNS request ID:

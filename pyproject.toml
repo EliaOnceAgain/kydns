@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kydns"
-version = "0.1.2"
+version = "0.1.3"
 description = "A user-friendly DNS client and packet analyzer"
 authors = ["EliaOnceAgain <eabunassar@gmail.com>"]
 license = "MIT"

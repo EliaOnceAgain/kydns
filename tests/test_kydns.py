@@ -27,6 +27,14 @@ def test_request_ns():
     assert rsp and rsp.header.ancount > 0
 
 
+def test_response_rebuild():
+    req = Request(domain=TEST_DOMAIN_NAME_CORRECT, qtype=QTYPE.NS)
+    rsp = req.send(TEST_SERVER)
+    rsp2 = req.to_rsp(bytes(rsp))
+    assert bytes(rsp) == bytes(rsp2)
+    assert str(rsp) == str(rsp2)
+
+
 def test_request_wrong():
     req = Request(domain=TEST_DOMAIN_NAME_WRONG)
     rsp = req.send(TEST_SERVER)
@@ -56,6 +64,7 @@ def test_nonexisting_domain():
 test_request_ipv4()
 test_request_ipv6()
 test_request_ns()
+test_response_rebuild()
 test_request_wrong()
 test_invalid_domain()
 test_nonexisting_domain()
