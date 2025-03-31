@@ -3,11 +3,12 @@ class PPrinter:
     FLEXWRAP = ["/", "+"]
     FIELD_SEP = "|"
 
-    def __init__(self, bits: int = 16, attach=False):
+    def __init__(self, bits: int = 16, section_name: str = "", attach: bool = False):
         self.bits = bits            # number of bits each line covers
         self.chars = bits * 2 - 1   # max number of characters per line
         self.curr_line = ""         # contains a line that wasn't filled by a single field
         self.free_bits = bits       # contains number of free bits remaining in such line
+        self.section_name = section_name
         self.fields = [] if attach else [self.get_top_numbers(), self.get_line_separator()]
 
     def get_top_numbers(self) -> str:
@@ -179,7 +180,7 @@ class PPrinter:
             self.fields.append(self.get_line_separator())
 
     def __repr__(self):
-        return "\n".join(self.fields) + "<--" + "\n"
+        return "\n".join(self.fields) + "<--" + self.section_name + "\n"
 
     def center_text(self, text: str, bitlen: int) -> str:
         charlen = self.bitlen_to_charlen(bitlen)

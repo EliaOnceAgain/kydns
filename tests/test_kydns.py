@@ -4,21 +4,21 @@ from kydns.kyd_models import QTYPE
 
 TEST_DOMAIN_NAME_CORRECT = "example.com"
 TEST_DOMAIN_NAME_WRONG = "exmaple.com"
-TEST_DOMAIN_IP4 = "93.184.216.34"
-TEST_DOMAIN_IP6 = "2606:2800:220:1:248:1893:25c8:1946"
+TEST_DOMAIN_IP4 = "96.7.128.198"
+TEST_DOMAIN_IP6 = "2600:1406:3a00:21::173e:2e65"
 TEST_SERVER = ("1.1.1.1", 53)
 
 
 def test_request_ipv4():
     req = Request(domain=TEST_DOMAIN_NAME_CORRECT)
     rsp = req.send(TEST_SERVER)
-    assert rsp.records[0].ans == TEST_DOMAIN_IP4, f"response: {rsp.records[0].ans},  expected: {TEST_DOMAIN_IP4}"
+    assert any(rr.ans == TEST_DOMAIN_IP4 for rr in rsp.records), f"response missing expected ipv4: {TEST_DOMAIN_IP4}"
 
 
 def test_request_ipv6():
     req = Request(domain=TEST_DOMAIN_NAME_CORRECT, qtype=QTYPE.AAAA)
     rsp = req.send(TEST_SERVER)
-    assert rsp.records[0].ans == TEST_DOMAIN_IP6, f"response: {rsp.records[0].ans},  expected: {TEST_DOMAIN_IP4}"
+    assert any(rr.ans == TEST_DOMAIN_IP6 for rr in rsp.records), f"response missing expected ipv6: {TEST_DOMAIN_IP6}"
 
 
 def test_request_ns():

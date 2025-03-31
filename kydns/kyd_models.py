@@ -89,7 +89,7 @@ class DNSHeader(ctypes.BigEndianStructure):
     ]
 
     def __repr__(self):
-        pp = PPrinter()
+        pp = PPrinter(section_name="Header")
         pp.add(text=f"0x{self.id:04x}", bitlen=16)
         pp.add(text=f"{self.qr:01b}", bitlen=1)
         pp.add(text=f"0x{self.opcode:01x}", bitlen=4)
@@ -122,7 +122,7 @@ class DNSQuestion:
         return len(self.qname) + 4
 
     def __repr__(self):
-        pp = PPrinter(attach=True)
+        pp = PPrinter(section_name="Question", attach=True)
         pp.add(text=f"{self.qname}", bitlen=16, flex=True)
         pp.add(text=f"0x{self.qtype:04x}", bitlen=16)
         pp.add(text=f"0x{self.qclass:04x}", bitlen=16)

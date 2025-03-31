@@ -36,7 +36,7 @@ class DNSRecord:
         return ans
 
     def __repr__(self):
-        pp = PPrinter(attach=True)
+        pp = PPrinter(section_name=self.__class__.__name__, attach=True)
         pp.add(text=f"{self.name}", bitlen=16, flex=True)
         pp.add(text=f"0x{self.rtype:04x}", bitlen=16)
         pp.add(text=f"0x{self.rclass:04x}", bitlen=16)
