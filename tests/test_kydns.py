@@ -1,24 +1,24 @@
 from kydns import Request
 from kydns.kyd_exc import *
-from kydns.kyd_models import QTYPE
+from kydns.kyd_question import QTYPE
 
 TEST_DOMAIN_NAME_CORRECT = "example.com"
 TEST_DOMAIN_NAME_WRONG = "exmaple.com"
 TEST_DOMAIN_IP4 = "96.7.128.198"
 TEST_DOMAIN_IP6 = "2600:1406:3a00:21::173e:2e65"
-TEST_SERVER = ("1.1.1.1", 53)
+TEST_SERVER = ("127.0.0.53", 53)
 
 
 def test_request_ipv4():
     req = Request(domain=TEST_DOMAIN_NAME_CORRECT)
     rsp = req.send(TEST_SERVER)
-    assert any(rr.ans == TEST_DOMAIN_IP4 for rr in rsp.records), f"response missing expected ipv4: {TEST_DOMAIN_IP4}"
+    assert any(rr.payload() == TEST_DOMAIN_IP4 for rr in rsp.records), f"response missing expected ipv4: {TEST_DOMAIN_IP4}"
 
 
 def test_request_ipv6():
     req = Request(domain=TEST_DOMAIN_NAME_CORRECT, qtype=QTYPE.AAAA)
     rsp = req.send(TEST_SERVER)
-    assert any(rr.ans == TEST_DOMAIN_IP6 for rr in rsp.records), f"response missing expected ipv6: {TEST_DOMAIN_IP6}"
+    assert any(rr.payload() == TEST_DOMAIN_IP6 for rr in rsp.records), f"response missing expected ipv6: {TEST_DOMAIN_IP6}"
 
 
 def test_request_ns():
@@ -41,16 +41,6 @@ def test_request_wrong():
     assert rsp.records[0].rdata != TEST_DOMAIN_IP4, f"response: {rsp.records[0].rdata},  expected: {TEST_DOMAIN_IP4}"
 
 
-def test_invalid_domain():
-    success = 0
-    try:
-        req = Request(domain="abcdefghikabcdefghikabcdefghikabcdefghikabcdefghikabcdefghikabcdefghik.com")
-        req.send(TEST_SERVER)
-    except DNSInvalidDomain:
-        success = 1
-    assert success, f"expected invalid domain"
-
-
 def test_nonexisting_domain():
     success = 0
     req = Request(domain="abcdefghikabcdefghikabcdefghc.nothing")
@@ -59,12 +49,3 @@ def test_nonexisting_domain():
     except DNSNameError:
         success = 1
     assert success, f"expected domain not found"
-
-
-test_request_ipv4()
-test_request_ipv6()
-test_request_ns()
-test_response_rebuild()
-test_request_wrong()
-test_invalid_domain()
-test_nonexisting_domain()

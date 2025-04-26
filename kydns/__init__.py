@@ -1,10 +1,10 @@
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 import secrets
 import socket
-
 from kydns.kyd_exc import *
-from kydns.kyd_models import DNSHeader, DNSQuestion
+from kydns.kyd_header import DNSHeader
+from kydns.kyd_question import DNSQuestion
 from kydns.kyd_records import DNSRecord
 
 DNS_HEADER_LEN = 12
@@ -12,10 +12,10 @@ DNS_HEADER_LEN = 12
 
 class Request:
     def __init__(self, domain, qtype=1, qclass=1, id=None,
-                 qr=0, opcode=0, aa=0, tc=0, rd=1, ra=0, z=0, rcode=0,
+                 qr=0, opcode=0, aa=0, tc=0, rd=1, ra=0, z=0, ad=0, cd=0, rcode=0,
                  qdcount=1, ancount=0, nscount=0, arcount=0):
         self.header = DNSHeader(id=id or int(secrets.token_hex(2), 16),
-                                qr=qr, opcode=opcode, aa=aa, tc=tc, rd=rd, ra=ra, z=z, rcode=rcode,
+                                qr=qr, opcode=opcode, aa=aa, tc=tc, rd=rd, ra=ra, z=z, ad=ad, cd=cd, rcode=rcode,
                                 qdcount=qdcount, ancount=ancount, nscount=nscount, arcount=arcount)
         self.question = DNSQuestion(domain, qtype, qclass)
 
@@ -33,7 +33,7 @@ class Request:
             try:
                 data, server = sock.recvfrom(4096)
             except socket.timeout:
-                raise DNSResponseTimeout(f"Timed out after waiting for response from {addr} after {timeout}s")
+                raise DNSResponseTimeout(f"Timed out while waiting for response from {addr} after {timeout}s")
         finally:
             sock.close()
         return self.to_rsp(rsp=data, rsp_server=server)
@@ -42,12 +42,12 @@ class Request:
         obj = Response(rsp_server)
         obj.header = DNSHeader.from_buffer_copy(rsp[:DNS_HEADER_LEN])
         self.raise_on_err(obj.header)
-        obj.question, bytes_read = DNSQuestion.from_rsp(rsp)
-        index = DNS_HEADER_LEN + bytes_read
+        obj.question = DNSQuestion.from_rsp(rsp)
+        index = DNS_HEADER_LEN + len(obj.question)
         for _ in range(obj.header.ancount):
-            record, bytes_read = DNSRecord.from_rsp(obj.question.qtype, rsp, index)
+            record = DNSRecord.from_rsp(rsp, index)
             obj.add_record(record)
-            index += bytes_read
+            index += len(record)
         return obj
 
     def raise_on_err(self, rsp_header) -> None:
